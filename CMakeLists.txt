@@ -1,18 +1,45 @@
-cmake_minimum_required(VERSION 3.20)
-project(algorithms-in-c)
+cmake_minimum_required(VERSION 4.1)
+project(algorithms-in-c VERSION 1.0 LANGUAGES C)
 
-add_compile_options(-Wall -Wextra -Wunused -fsanitize=address,undefined)
+# Set the required C standard to C17 (ISO/IEC 9899:2018)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-include_directories(include)
+# Set the outputs directories in build folder
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-add_library(aic src/linked_list.c)
+# Configure global compiler warnings and strictness
+add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Werror)
 
-add_executable(tests tests/test_linked_list.c)
-target_link_libraries(tests aic)
+# Compiling all source files into a aic library
+file(GLOB SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
+add_library(obj_target OBJECT ${SRC_FILES})
+target_include_directories(obj_target PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-install(TARGETS aic
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
+add_library(aic STATIC $<TARGET_OBJECTS:obj_target>)
 
-install(FILES include/linked_list.h DESTINATION include)
+# Enables testing and adds tests directory
+enable_testing()
+add_subdirectory(tests)
+
+# 1. Configure installation rules for the library and headers
+# install(TARGETS aic
+#    EXPORT aic-targets
+#    LIBRARY DESTINATION lib
+#    ARCHIVE DESTINATION lib
+# )
+
+# 2. Configure installation rules for the header files
+# install(FILES include/linked_list.h DESTINATION include)
+
+# 3. This step generates the necessary metadata for other CMake projects to find and use 
+# the 'aic' library using 'find_package(algorithms-in-c)'.
+# install(EXPORT aic-targets
+#    FILE 
+#        algorithms-in-cConfig.cmake
+#    NAMESPACE aic::
+#    DESTINATION 
+#        lib/cmake/algorithms-in-c
+# )
