@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.1)
 project(algorithms-in-c VERSION 1.0 LANGUAGES C)
 
 # Set the required C standard to C17 (ISO/IEC 9899:2018)
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Set the outputs directories in build folder
@@ -22,6 +22,10 @@ add_library(aic STATIC $<TARGET_OBJECTS:obj_target>)
 
 # Enables testing and adds tests directory
 enable_testing()
+
+# Find and configure Criterion
+find_package(Criterion REQUIRED)
+
 add_subdirectory(tests)
 
 # 1. Configure installation rules for the library and headers
