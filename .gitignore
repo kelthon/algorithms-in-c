@@ -54,6 +54,7 @@ dkms.conf
 # CMake build artifacts
 CMakeCache.txt
 CMakeFiles/
+Testing/
 cmake_install.cmake
 Makefile
 build/
@@ -66,3 +67,6 @@ _generated.ninja
 rules.ninja
 build.ninja
 *.ninja_log
+
+# vscode
+.vscode/
