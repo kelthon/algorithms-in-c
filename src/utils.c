@@ -6,9 +6,10 @@
  * including insertion, removal, swapping, sorting, and iteration.
  */
 
-#include <stdint.h>
-#include <errno.h>
 #include "utils.h"
+
+#include <errno.h>
+#include <stdint.h>
 
 /**
  * @brief Normalizes a negative index into a positive index relative to the
@@ -23,13 +24,18 @@
  * set).
  */
 uint64_t index_from_zero(int position, uint64_t max) {
-  if (position >= 0) {
-    return (uint64_t)position;
-  }
-
   if (max == 0) {
     errno = EINVAL;
     return 0;
+  }
+
+  if (position >= 0) {
+    if ((uint64_t)position >= max) {
+      errno = EINVAL;
+      return max;
+    }
+
+    return (uint64_t)position;
   }
 
   uint64_t distance_from_end = (uint64_t)(-position);

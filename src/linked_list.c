@@ -6,16 +6,17 @@
  * including insertion, removal, swapping, sorting, and iteration.
  */
 
-#include "utils.h"
 #include "linked_list.h"
 
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "utils.h"
+
 /**
  * @struct ListNode
- * @brief Represents a a node in the linked list.
+ * @brief Represents a node in the linked list.
  *
  * Each node stores a reference to the next node and holds a pointer
  * to the associated data.
@@ -53,6 +54,13 @@ struct LinkedList {
    * If `NULL`, the list is empty.
    */
   ListNode* head;
+
+  /**
+   * @var LinkedList::deallocator_function
+   * @brief Pointer to a function responsible for clearing a node from the
+   * heap memory, preventing memory leaks.
+   */
+  void* (*deallocator_function)(void** data);
 
   /**
    * @var LinkedList::length
@@ -249,6 +257,9 @@ bool list_insert(List* list, int position, void* value) {
   if (!list_input_validate(list, value)) return false;
 
   uint64_t index = index_from_zero(position, list->length);
+  if (errno == EINVAL) {
+    return false;
+  }
 
   if (index == 0) {
     return list_push(list, value);
@@ -258,7 +269,12 @@ bool list_insert(List* list, int position, void* value) {
     return list_append(list, value);
   }
 
-  prev_node = list_node_get(list, index_from_zero(position - 1, list->length));
+  uint64_t prev_node_index = index_from_zero(position - 1, list->length);
+  if (errno == EINVAL) {
+    return false;
+  }
+
+  prev_node = list_node_get(list, prev_node_index);
   if (prev_node == NULL) {
     errno = EINVAL;
     return false;
@@ -270,6 +286,7 @@ bool list_insert(List* list, int position, void* value) {
   }
 
   prev_node->next = new_node;
+  list->length++;
 
   return true;
 }
@@ -282,9 +299,8 @@ bool list_insert(List* list, int position, void* value) {
  * @return true if successful, false otherwise.
  */
 bool list_append(List* list, void* value) {
-  uint64_t index;
   ListNode *new_node, *prev_node;
-  int last_item_index = -1;
+  uint64_t index = list->length - 1;
 
   if (!list_input_validate(list, value)) return false;
 
@@ -293,14 +309,13 @@ bool list_append(List* list, void* value) {
     return false;
   }
 
-  index = index_from_zero(last_item_index - 1, list->length);
-
   prev_node = list_node_get(list, index);
   if (prev_node == NULL) {
     return false;
   }
 
   prev_node->next = new_node;
+  list->length++;
 
   return true;
 }
@@ -312,7 +327,7 @@ bool list_append(List* list, void* value) {
  *
  * @param list Pointer to the list.
  * @param position The zero-based position of the node.
- * @param peeked_value A pointer to the stored data
+ * @param peeked_value Pointer to where the data pointer will be stored.
  * @return true if value was found, or false if the index is out
  * of bounds or the list is invalid.
  */
@@ -325,6 +340,9 @@ bool list_peek(const List* list, int position, void* peeked_value) {
   }
 
   uint64_t index = index_from_zero(position, list->length);
+  if (errno == EINVAL) {
+    return false;
+  }
 
   node = list_node_get(list, index);
   if (node == NULL) {
@@ -336,6 +354,18 @@ bool list_peek(const List* list, int position, void* peeked_value) {
   return true;
 }
 
+/**
+ * @brief Removes a node matching the target value from the list.
+ *
+ * Uses the provided compare function to find the matching node and removes it
+ * from the list.
+ *
+ * @param list Pointer to the linked list.
+ * @param target_value Pointer to the value to search for.
+ * @param compare_function Function to compare target_value with current node data.
+ * @param removed_value Pointer to where the removed data pointer will be stored.
+ * @return true if the node was found and removed, false otherwise.
+ */
 bool list_remove(List* list, void* target_value,
                  int* (*compare_function)(void* target_value,
                                           void* current_value),
@@ -388,4 +418,36 @@ uint64_t list_length(const List* list) {
  */
 bool list_is_empty(const List* list) {
   return list == NULL || list->head == NULL;
+}
+
+
+/**
+ * @brief Removes all nodes from a linked list, freeing memory.
+ *
+ * @param list Pointer to the linked list (non-NULL).
+ */
+void list_clear(List* list) {
+  ListNode *prev, *current = list->head;
+
+  while (current != NULL) {
+    prev = current;
+    current = current->next;
+
+    list->deallocator_function(&prev->data);
+    free(prev);
+    prev = NULL;
+  }
+}
+/**
+ * @brief Removes the linked list from memory.
+ *
+ * @param list Pointer to the linked list (non-NULL).
+ */
+void list_delete(List* list) {
+  if (!list_is_empty(list)) {
+    list_clear(list);
+
+    free(list);
+    list = NULL;
+  }
 }

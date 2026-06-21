@@ -8,8 +8,8 @@
  * Functions allow dynamic memory management and flexible element manipulation,
  * making it suitable for various use cases requiring sequential storage.
  *
- * @author Kelthon
- * @date 2025-06-02
+ * @author Kelthon Alves
+ * @date 2026-06-20
  */
 
 #ifndef AIC_LINKED_LIST_H
@@ -67,7 +67,7 @@ List* list_map(const List* list,
 List* list_copy(const List* list);
 List* list_from(uint64_t argc, const void* argv[]);
 
-void list_clear(const List* list, void* (*clear_function)(void* item));
-void list_delete(List* list, void* (*clear_function)(void* item));
+void list_clear(List* list);
+void list_delete(List* list);
 
 #endif  // AIC_LINKED_LIST_H
